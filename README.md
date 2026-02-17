@@ -1,0 +1,3 @@
+# CottonRNG
+งานcompro
+HUH
