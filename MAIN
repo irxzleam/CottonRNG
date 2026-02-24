@@ -1,1 +1,99 @@
+#include <iostream>
+#include <conio.h>
+#include <windows.h>
+#include <ctime>
+#include <vector>
+#include <string>
 
+using namespace std;
+
+// --- โครงสร้างข้อมูล (ใช้ร่วมกันทุกคน) ---
+struct Slot {
+    bool isPlanted = false;
+    string sizeType = "None";
+    int buffColor = 7;
+    int value = 0;
+};
+
+// ==========================================
+// --- ส่วนของ PROTOTYPES (ห้ามเปลี่ยนชื่อฟังก์ชัน) ---
+// ==========================================
+
+// [คน 1] - UI & Visual Designer
+void setColor(int color);
+void printCentered(string text, int width, int color = 7);
+void drawUI(int money, const vector<Slot>& slots, string weatherName, float weatherMult);
+
+// [คน 3] - Game Logic & RNG
+void plantSeed(Slot& slot, float weatherMult);
+void updateWeather(string& name, float& mult);
+
+// [คน 4] - Economy & Data Manager
+int sellAll(vector<Slot>& slots);
+
+
+// ==========================================
+// --- [คน 2] - CORE ENGINE (MAIN LOOP) ---
+// ==========================================
+int main() {
+    srand(time(0));
+    int money = 0;
+    vector<Slot> slots(5);
+    string weatherName = "Normal";
+    float weatherMult = 1.0;
+
+    while (true) {
+        // เรียกใช้ฟังก์ชันของ คนที่ 1
+        drawUI(money, slots, weatherName, weatherMult);
+
+        char input = _getch();
+        if (input >= '1' && input <= '5') {
+            int idx = input - '1';
+            if (!slots[idx].isPlanted) {
+                // เรียกใช้ฟังก์ชันของ คนที่ 3
+                plantSeed(slots[idx], weatherMult);
+            } else {
+                money += slots[idx].value;
+                slots[idx].isPlanted = false;
+            }
+        }
+        else if (input == 's' || input == 'S') {
+            // เรียกใช้ฟังก์ชันของ คนที่ 4
+            money += sellAll(slots);
+            // เรียกใช้ฟังก์ชันของ คนที่ 3
+            updateWeather(weatherName, weatherMult);
+        }
+        else if (input == 'q' || input == 'Q') break;
+    }
+    return 0;
+}
+
+
+// ==========================================
+// --- ส่วนการเติม CODE (แยกกันทำตามกิ่งของตัวเอง) ---
+// ==========================================
+
+// --- [คน 1] เติมที่นี่ ---
+void setColor(int color) {
+    // โค้ด SetConsoleTextAttribute...
+}
+void printCentered(string text, int width, int color) {
+    // โค้ดจัดกึ่งกลาง...
+}
+void drawUI(int money, const vector<Slot>& slots, string weatherName, float weatherMult) {
+    // โค้ดวาดหน้าจอทั้งหมด...
+}
+
+// --- [คน 3] เติมที่นี่ ---
+void plantSeed(Slot& slot, float weatherMult) {
+    // โค้ดสุ่ม Rare และ Buff...
+}
+void updateWeather(string& name, float& mult) {
+    // โค้ดสุ่มอากาศ...
+}
+
+// --- [คน 4] เติมที่นี่ ---
+int sellAll(vector<Slot>& slots) {
+    // โค้ดวน Loop รวมเงินและเคลียร์ Slot...
+    return 0; // ลบออกเมื่อเขียนเสร็จ
+}
