@@ -1,3 +1,4 @@
+//อนิเมชั่่นสุ่ม
 void printCentered(string text, int width, int color = 7) {
     int padding = (width - text.length()) / 2;
     for (int i = 0; i < padding; i++) cout << " ";
@@ -45,3 +46,4 @@ void rollSeedAnimation(mt19937& gen, string finalSize, string finalBuff, int fin
     
     this_thread::sleep_for(chrono::milliseconds(1500)); 
 }
+//อนิเมชั่นสุ่ม
