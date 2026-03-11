@@ -1,99 +1,542 @@
 #include <iostream>
 #include <conio.h>
 #include <windows.h>
-#include <ctime>
 #include <vector>
 #include <string>
-
+#include <thread>
+#include <chrono>
+#include <random>
 using namespace std;
 
-// --- โครงสร้างข้อมูล (ใช้ร่วมกันทุกคน) ---
+
+//ของในเกม
+struct Item {
+    string name;
+    int value;
+    int color;
+};
+
 struct Slot {
     bool isPlanted = false;
     string sizeType = "None";
+    string buffName = "None";
     int buffColor = 7;
     int value = 0;
 };
 
-// ==========================================
-// --- ส่วนของ PROTOTYPES (ห้ามเปลี่ยนชื่อฟังก์ชัน) ---
-// ==========================================
+void setColor(int color) {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
+}
 
-// [คน 1] - UI & Visual Designer
-void setColor(int color);
-void printCentered(string text, int width, int color = 7);
-void drawUI(int money, const vector<Slot>& slots, string weatherName, float weatherMult);
-
-// [คน 3] - Game Logic & RNG
-void plantSeed(Slot& slot, float weatherMult);
-void updateWeather(string& name, float& mult);
-
-// [คน 4] - Economy & Data Manager
-int sellAll(vector<Slot>& slots);
+void printCentered(string text, int width, int color = 7) {
+    int padding = (width - text.length()) / 2;
+    for (int i = 0; i < padding; i++) cout << " ";
+    setColor(color);
+    cout << text;
+    setColor(7);
+    for (int i = 0; i < (width - text.length() - padding); i++) cout << " ";
+}
 
 
-// ==========================================
-// --- [คน 2] - CORE ENGINE (MAIN LOOP) ---
-// ==========================================
+void rollSeedAnimation(mt19937& gen, string finalSize, string finalBuff, int finalColor) {
+    int spins = 25;
+    int current_delay = 15;
+    
+    string sizes[] = {"Giant", "Huge", "Normal"};
+    string buffs[] = {"Blackhole", "Ice", "Fire", "Diamond", "Gold", "Normal"};
+    int colors[] = {13, 11, 12, 3, 14, 15};
+
+    uniform_int_distribution<> sizeDis(0, 2);
+    uniform_int_distribution<> buffDis(0, 5);
+
+    cout << "\n"; 
+    for(int i = 0; i < spins; i++) {
+        int rSize = sizeDis(gen);
+        int rBuff = buffDis(gen);
+        
+        cout << "\r [SYSTEM] Planting (-$100) & Rolling Seed... [ ";
+        setColor(colors[rBuff]);
+        cout << buffs[rBuff] << " " << sizes[rSize];
+        setColor(7);
+        cout << " ]       " << flush;
+
+        this_thread::sleep_for(chrono::milliseconds(current_delay));
+
+        if (i > spins * 0.8) current_delay += 80;
+        else if (i > spins * 0.5) current_delay += 25;
+        else current_delay += 5;
+    }
+    
+    cout << "\r [SYSTEM] >> YOU GOT : [ ";
+    setColor(finalColor);
+    cout << finalBuff << " " << finalSize;
+    setColor(7);
+    cout << " ] << Placed in pot!          " << flush;
+    
+    this_thread::sleep_for(chrono::milliseconds(1500)); 
+}
+
 int main() {
-    srand(time(0));
-    int money = 0;
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<> dis(1, 100);
+
+    int money = 500; 
+    int fertilizer = 0;
+    int weatherMod = 0;
+    bool fertilizerActive = false;
+    
+    string currentWeather = "Clear Sky"; 
+    int weatherMulti = 1;
+    int plantCount = 0; 
+    
+    bool hasWon = false;
+
+    const int SLOT_WIDTH = 12; 
     vector<Slot> slots(5);
-    string weatherName = "Normal";
-    float weatherMult = 1.0;
+    vector<Item> backpack;
 
     while (true) {
-        // เรียกใช้ฟังก์ชันของ คนที่ 1
-        drawUI(money, slots, weatherName, weatherMult);
+        system("cls");
+        //ชนะเงิน 10000
+        if (money >= 10000 && !hasWon) {
+            hasWon = true;
+            
+            
+            setColor(14);
+            cout << "\n===============================================================\n";
+            cout << "||                  CONGRATULATIONS!                         ||\n";
+            cout << "===============================================================\n";
+            setColor(7);
+            cout << " > You have reached $10,000 and become the Ultimate Farmer!\n";
+            cout << " > A victory image has been opened!\n";
+            setColor(14);
+            cout << "===============================================================\n\n";
+            setColor(7);
+            cout << " Press any key to continue playing... ";
+            _getch();
+            system("cls");
+        }
+        
+        // จอหลัก
+        setColor(11); 
+        cout << "===============================================================\n";
+        cout << "||                    COTTON RNG                               ||\n";
+        cout << "===============================================================\n";
+        
+        //เงิน สภาพอากาศ
+        setColor(7);
+        cout << " [ SYSTEM STATUS ]\n";
+        cout << " > Money : "; 
+        
+        if (money < 0) { setColor(12); cout << "-$" << abs(money) << "\n"; }
+        else { setColor(14); cout << "$" << money << "\n"; }
+        setColor(7);
+        
+        cout << " > Current Weather : ";
+        if(currentWeather == "Clear Sky") { setColor(15); cout << "Clear Sky (Normal, Gold, Diamond)\n"; }
+        else if(currentWeather == "Scorching Heatwave") { setColor(12); cout << "Scorching Heatwave (+Fire Chance)\n"; }
+        else if(currentWeather == "Cryo Storm") { setColor(11); cout << "Cryo Storm (+Ice Chance)\n"; }
+        else if(currentWeather == "Void Disturbance") { setColor(13); cout << "Void Disturbance (+Blackhole Chance)\n"; }
+        setColor(7);
+
+        cout << " > Weather Change In: " << (2 - (plantCount % 2)) << " plants\n";
+
+        if (fertilizerActive) {
+            setColor(10); cout << " > Buff Active     : Fertilizer (Next crop is Giant!)\n"; setColor(7);
+        }
+        cout << "---------------------------------------------------------------\n";
+
+        //ช่องปลูก
+        setColor(8);
+        cout << "   [SLOT 1]    [SLOT 2]    [SLOT 3]    [SLOT 4]    [SLOT 5]   \n";
+        cout << "\n";
+
+        //ฝ้าย
+        for (int row = 0; row < 5; row++) {
+            for (int i = 0; i < 5; i++) {
+                string line = "";
+                //int currentColor = (row <= 2 && slots[i].isPlanted) ? slots[i].buffColor : 15; 
+                int currentColor ;
+                if (row <= 2 && slots[i].isPlanted) currentColor = slots[i].buffColor;
+                else currentColor = 15;
+                if (!slots[i].isPlanted) currentColor = 8; 
+
+                if (!slots[i].isPlanted) {
+                    if (row == 4) line = "[_____]"; else line = "|     |";
+                } else {
+                    if (slots[i].sizeType == "Giant") {
+                        if (row == 0) line = "  *** "; else if (row == 1) line = " ***** ";
+                        else if (row == 2) line = "*******"; else if (row == 3) line = "  |||  "; else line = "[|||||]";
+                    } else if (slots[i].sizeType == "Huge") {
+                        if (row == 0) line = "       "; else if (row == 1) line = "  ooo  ";
+                        else if (row == 2) line = " ooooo "; else if (row == 3) line = "  |||  "; else line = "[_|||_]";
+                    } else {
+                        if (row == 0) line = "       "; else if (row == 1) line = "       ";
+                        else if (row == 2) line = "   @   "; else if (row == 3) line = "   |   "; else line = "[__|__]";
+                    }
+                }
+                printCentered(line, SLOT_WIDTH, currentColor);
+            }
+            cout << "\n";
+        }
+        cout << "\n";
+
+        // textราคา 
+        for (int i = 0; i < 5; i++) {
+            if (slots[i].isPlanted) { printCentered("$" + to_string(slots[i].value), SLOT_WIDTH, 15); } 
+            else { printCentered("-", SLOT_WIDTH, 8); }
+        }
+        cout << "\n"; 
+        
+        // testbuff 
+        for (int i = 0; i < 5; i++) {
+            if (slots[i].isPlanted) { printCentered("[" + slots[i].buffName + "]", SLOT_WIDTH, slots[i].buffColor); } 
+            else { printCentered("-", SLOT_WIDTH, 8); }
+        }
+        
+        // บอกปุ่ม
+        setColor(11);
+        cout << "\n\n===============================================================\n";
+        setColor(7);
+        cout << " [ COMMANDS ]\n";
+        cout << "  [1-5] Action (Plant/Harvest) | [S] Harvest All | [Q] Quit\n";
+        cout << "  [B] Backpack                 | [M] Market\n";
+        setColor(11);
+        cout << "===============================================================\n";
+        setColor(7);
+        cout << " Awaiting Input >> ";
 
         char input = _getch();
         if (input >= '1' && input <= '5') {
             int idx = input - '1';
+            
             if (!slots[idx].isPlanted) {
-                // เรียกใช้ฟังก์ชันของ คนที่ 3
-                plantSeed(slots[idx], weatherMult);
-            } else {
-                money += slots[idx].value;
+                
+                // หักเงินค่าปลูก
+                money -= 100; 
+
+                // ตังหมด
+                if (money <= -1) {
+                    system("cls");
+                    setColor(12);
+                    cout << "\n\n===============================================================\n";
+                    cout << "||                  [ WARNING! BANKRUPTCY ]                  ||\n";
+                    cout << "===============================================================\n";
+                    cout << " > Not enough money! (Money: $" << money << ")\n";
+                    cout << " > Selling all crops and items ...\n";
+                    
+                    int autoSellTotal = 0;
+                    
+                    // บังคับขายกระถาง
+                    for (int i = 0; i < 5; i++) {
+                        if (slots[i].isPlanted) {
+                            autoSellTotal += slots[i].value;
+                            slots[i].isPlanted = false;
+                        }
+                    }
+                    
+                    // บังคับขายกระเป๋า
+                    for (size_t i = 0; i < backpack.size(); i++) {
+                        autoSellTotal += backpack[i].value;
+                    }
+                    backpack.clear();
+                    
+                    this_thread::sleep_for(chrono::milliseconds(2000));
+                    
+                    money += autoSellTotal;
+                    
+                    cout << " > Sold everything for $" << autoSellTotal << "!\n";
+                    
+                    if (money <= -1) { 
+                        cout << " > ...But it wasn't enough. You are still in debt ($" << money << ").\n";
+                        cout << "\n [ GAME OVER ] You lost the farm! Restarting game...\n";
+                        this_thread::sleep_for(chrono::milliseconds(5000));
+                        
+                        // รีเกม
+                        money = 500;
+                        fertilizer = 0;
+                        weatherMod = 0;
+                        fertilizerActive = false;
+                        currentWeather = "Clear Sky";
+                        plantCount = 0;
+                        hasWon = false; 
+                        for (int i = 0; i < 5; i++) slots[i] = Slot();
+                        backpack.clear();
+                    } else {
+                        setColor(10);
+                        money += 100; 
+                        cout << "\n [ SYSTEM ] You barely survived! Refunded $100 planting cost.\n";
+                        cout << " > Money: $" << money << ".\n";
+                        this_thread::sleep_for(chrono::milliseconds(3000));
+                    }
+                    setColor(7);
+                    
+                    continue; 
+                }
+
+                // สุ่ม
+                int rng = dis(gen);
+                int baseValue = 0;
+                
+                if (fertilizerActive) {
+                    rng = 1; 
+                    fertilizerActive = false; 
+                }
+
+                if (rng <= 10) { slots[idx].sizeType = "Giant"; baseValue = 500; }
+                else if (rng <= 40) { slots[idx].sizeType = "Huge"; baseValue = 100; }
+                else { slots[idx].sizeType = "Normal"; baseValue = 10; }
+
+                baseValue *= weatherMulti;
+
+                int bRng = dis(gen); 
+                string finalBuff = "Normal";
+                int finalColor = 15;
+                int finalMulti = 1;
+
+                if (currentWeather == "Clear Sky") {
+                    if (bRng <= 20)      { finalBuff = "Diamond"; finalColor = 3;  finalMulti = 3; } 
+                    else if (bRng <= 50) { finalBuff = "Gold";    finalColor = 14; finalMulti = 2; } 
+                    else                 { finalBuff = "Normal";  finalColor = 15; finalMulti = 1; } 
+                } 
+                else if (currentWeather == "Scorching Heatwave") {
+                    if (bRng <= 20)      { finalBuff = "Fire";    finalColor = 12; finalMulti = 4; } 
+                    else if (bRng <= 35) { finalBuff = "Diamond"; finalColor = 3;  finalMulti = 3; } 
+                    else if (bRng <= 60) { finalBuff = "Gold";    finalColor = 14; finalMulti = 2; } 
+                    else                 { finalBuff = "Normal";  finalColor = 15; finalMulti = 1; } 
+                }
+                else if (currentWeather == "Cryo Storm") {
+                    if (bRng <= 15)      { finalBuff = "Ice";     finalColor = 11; finalMulti = 5; } 
+                    else if (bRng <= 30) { finalBuff = "Diamond"; finalColor = 3;  finalMulti = 3; } 
+                    else if (bRng <= 55) { finalBuff = "Gold";    finalColor = 14; finalMulti = 2; } 
+                    else                 { finalBuff = "Normal";  finalColor = 15; finalMulti = 1; } 
+                }
+                else if (currentWeather == "Void Disturbance") {
+                    if (bRng <= 5)       { finalBuff = "Blackhole"; finalColor = 13; finalMulti = 10; } 
+                    else if (bRng <= 20) { finalBuff = "Diamond";   finalColor = 3;  finalMulti = 3; }  
+                    else if (bRng <= 45) { finalBuff = "Gold";      finalColor = 14; finalMulti = 2; }  
+                    else                 { finalBuff = "Normal";    finalColor = 15; finalMulti = 1; }  
+                }
+
+                slots[idx].buffName = finalBuff;
+                slots[idx].buffColor = finalColor;
+                slots[idx].value = baseValue * finalMulti;
+
+                rollSeedAnimation(gen, slots[idx].sizeType, slots[idx].buffName, slots[idx].buffColor); 
+                slots[idx].isPlanted = true; 
+
+                plantCount++;
+                
+                // รอบเปลี่ยนอากาศ
+                if (plantCount % 2 == 0) {
+                    int wRng = dis(gen);
+                    if (wRng <= 40) currentWeather = "Clear Sky";
+                    else if (wRng <= 70) currentWeather = "Scorching Heatwave";
+                    else if (wRng <= 90) currentWeather = "Cryo Storm";
+                    else currentWeather = "Void Disturbance";
+
+                    cout << "\n\n [SYSTEM] Automatic Weather Change! Weather is now " << currentWeather << "!" << flush;
+                    this_thread::sleep_for(chrono::milliseconds(1500));
+                }
+            } 
+            else {
+                string fullItemName = slots[idx].buffName + " " + slots[idx].sizeType;
+                backpack.push_back({fullItemName, slots[idx].value, slots[idx].buffColor});
                 slots[idx].isPlanted = false;
+
+                cout << "\n\n [SYSTEM] Harvested [" << fullItemName << "] into Backpack!" << flush;
+                this_thread::sleep_for(chrono::milliseconds(500));
             }
         }
         else if (input == 's' || input == 'S') {
-            // เรียกใช้ฟังก์ชันของ คนที่ 4
-            money += sellAll(slots);
-            // เรียกใช้ฟังก์ชันของ คนที่ 3
-            updateWeather(weatherName, weatherMult);
+            int count = 0;
+            for (int i = 0; i < 5; i++) {
+                if (slots[i].isPlanted) {
+                    string fullItemName = slots[i].buffName + " " + slots[i].sizeType;
+                    backpack.push_back({fullItemName, slots[i].value, slots[i].buffColor});
+                    slots[i].isPlanted = false;
+                    count++;
+                }
+            }
+            if(count > 0) {
+                cout << "\n\n [SYSTEM] Harvested " << count << " items into Backpack!" << flush;
+                this_thread::sleep_for(chrono::milliseconds(600));
+            }
         }
-        else if (input == 'q' || input == 'Q') break;
+        else if (input == 'm' || input == 'M') {
+            while (true) {
+                system("cls");
+                setColor(10); 
+                cout << "===============================================================\n";
+                cout << "||                         MARKET                              ||\n";
+                cout << "===============================================================\n";
+                setColor(7);
+                
+                if (money < 0) { setColor(12); cout << " > Your Balance : -$" << abs(money) << "\n"; }
+                else { setColor(14); cout << " > Your Balance : $" << money << "\n"; }
+                
+                setColor(7);
+                cout << "---------------------------------------------------------------\n";
+                cout << " [1] Fertilizer       | Price: $200 | (Forces next crop to be Giant)\n";
+                cout << " [2] Weather Modifier | Price: $300 | (Change the global weather)\n";
+                setColor(10);
+                cout << "---------------------------------------------------------------\n";
+                setColor(7);
+                cout << " [B] Back to Farm \n";
+                setColor(10);
+                cout << "===============================================================\n";
+                setColor(7);
+                cout << " Input >> ";
+
+                char mInput = _getch();
+                if (mInput == '1') {
+                    if (money >= 200) {
+                        money -= 200;
+                        fertilizer++;
+                        cout << "\n\n [SYSTEM] Bought 1x Fertilizer!" << flush;
+                    } else {
+                        cout << "\n\n [SYSTEM] Not enough money!" << flush;
+                    }
+                    this_thread::sleep_for(chrono::milliseconds(600));
+                } else if (mInput == '2') {
+                    if (money >= 300) {
+                        money -= 300;
+                        weatherMod++;
+                        cout << "\n\n [SYSTEM] Bought 1x Weather Modifier!" << flush;
+                    } else {
+                        cout << "\n\n [SYSTEM] Not enough money!" << flush;
+                    }
+                    this_thread::sleep_for(chrono::milliseconds(600));
+                } else if (mInput == 'b' || mInput == 'B') {
+                    break;
+                }
+            }
+        }
+        else if (input == 'b' || input == 'B') {
+            while (true) {
+                system("cls");
+                setColor(14); 
+                cout << "===============================================================\n";
+                cout << "||                       BACKPACK                              ||\n";
+                cout << "===============================================================\n";
+                setColor(7);
+                
+                int totalValue = 0;
+                for (size_t i = 0; i < backpack.size(); i++) {
+                    totalValue += backpack[i].value;
+                }
+
+                cout << " > Cotton Storage Value  : $ " << totalValue << "\n";
+                cout << " > Consumables Items   : Fertilizer [x" << fertilizer << "] | Weather Modifier [x" << weatherMod << "]\n";
+                cout << "---------------------------------------------------------------\n";
+
+                if (backpack.empty()) {
+                    setColor(8);
+                    cout << "\n           [ Your crop backpack is empty ]\n\n";
+                } else {
+                    for (size_t i = 0; i < backpack.size(); i++) {
+                        setColor(7);
+                        cout << "  [" << i + 1 << "] ";
+                        setColor(backpack[i].color);
+                        cout << backpack[i].name;
+                        setColor(7);
+                        cout << "  =>  $" << backpack[i].value << "\n";
+                    }
+                }
+
+                setColor(14);
+                cout << "---------------------------------------------------------------\n";
+                setColor(7);
+                cout << " [ BACKPACK COMMANDS ]\n";
+                cout << "  [Type 1-" << (backpack.empty() ? 1 : backpack.size()) << "] Sell Crop | [S] Sell All Crops | [B] Back to Farm\n";
+                cout << "  [F] Use Fertilizer     | [W] Use Weather Modifier\n";
+                setColor(14);
+                cout << "===============================================================\n";
+                setColor(7);
+                cout << " Input >> ";
+
+                string bpInput;
+                cin >> bpInput;
+                cin.ignore(10000, '\n'); 
+
+                if (bpInput == "s" || bpInput == "S") {
+                    if (!backpack.empty()) {
+                        money += totalValue;
+                        backpack.clear(); 
+                        cout << "\n [SYSTEM] Sold all crops! Returning to farm..." << flush;
+                        this_thread::sleep_for(chrono::milliseconds(600));
+                        break;
+                    }
+                } else if (bpInput == "b" || bpInput == "B") {
+                    break; 
+                } else if (bpInput == "f" || bpInput == "F") {
+                    if (fertilizer > 0) {
+                        fertilizer--;
+                        fertilizerActive = true;
+                        cout << "\n [SYSTEM] Used Fertilizer! Next crop will be Giant." << flush;
+                    } else {
+                        cout << "\n [SYSTEM] You don't have any Fertilizer!" << flush;
+                    }
+                    this_thread::sleep_for(chrono::milliseconds(800));
+                } else if (bpInput == "w" || bpInput == "W") {
+                    if (weatherMod > 0) {
+                        cout << "\n [1] Clear Sky | [2] Scorching Heatwave | [3] Cryo Storm | [4] Void Disturbance\n > Select Weather: ";
+                        char wChoice = _getch();
+                        if (wChoice == '1') { currentWeather = "Clear Sky"; weatherMod--; }
+                        else if (wChoice == '2') { currentWeather = "Scorching Heatwave"; weatherMod--; }
+                        else if (wChoice == '3') { currentWeather = "Cryo Storm"; weatherMod--; }
+                        else if (wChoice == '4') { currentWeather = "Void Disturbance"; weatherMod--; }
+                        else { cout << "\n [SYSTEM] Invalid Choice!"; this_thread::sleep_for(chrono::milliseconds(600)); continue; }
+                        
+                        plantCount = 0; 
+                        cout << "\n\n [SYSTEM] Weather changed to " << currentWeather << "!" << flush;
+                    } else {
+                        cout << "\n [SYSTEM] You don't have any Weather Modifiers!" << flush;
+                    }
+                    this_thread::sleep_for(chrono::milliseconds(800));
+                } else {
+                    try {
+                        int itemIdx = stoi(bpInput);
+                        if (itemIdx >= 1 && itemIdx <= backpack.size()) {
+                            int actualIdx = itemIdx - 1; 
+                            money += backpack[actualIdx].value;
+                            cout << "\n [SYSTEM] Sold [" << backpack[actualIdx].name << "] for $" << backpack[actualIdx].value << "!" << flush;
+                            backpack.erase(backpack.begin() + actualIdx);
+                            this_thread::sleep_for(chrono::milliseconds(600));
+                        } else {
+                            cout << "\n [SYSTEM] Invalid item number!" << flush;
+                            this_thread::sleep_for(chrono::milliseconds(600));
+                        }
+                    } catch (...) {
+                        cout << "\n [SYSTEM] Invalid command!" << flush;
+                        this_thread::sleep_for(chrono::milliseconds(600));
+                    }
+                }
+            }
+        }
+        else if (input == 'q' || input == 'Q') 
+        {
+            system("cls");
+            setColor(10);
+            cout << "\n\n";
+            cout << "      =====================================================\n";
+            cout << "      ||                                                 ||\n";
+            printCentered("THANK YOU FOR PLAYING COTTON RNG!", 60, 10);
+            setColor(10);
+            cout << "\n      ||                                                 ||\n";
+            printCentered("Quitting game...", 60, 7);
+            setColor(10);
+            cout << "\n      ||                                                 ||\n";
+            setColor(10);
+            cout << "      =====================================================\n";
+            cout << "\n\n";
+
+
+            this_thread::sleep_for(chrono::milliseconds(3000));
+            setColor(15);
+            break;
+        }
     }
     return 0;
-}
-
-
-// ==========================================
-// --- ส่วนการเติม CODE (แยกกันทำตามกิ่งของตัวเอง) ---
-// ==========================================
-
-// --- [คน 1] เติมที่นี่ ---
-void setColor(int color) {
-    // โค้ด SetConsoleTextAttribute...
-}
-void printCentered(string text, int width, int color) {
-    // โค้ดจัดกึ่งกลาง...
-}
-void drawUI(int money, const vector<Slot>& slots, string weatherName, float weatherMult) {
-    // โค้ดวาดหน้าจอทั้งหมด...
-}
-
-// --- [คน 3] เติมที่นี่ ---
-void plantSeed(Slot& slot, float weatherMult) {
-    // โค้ดสุ่ม Rare และ Buff...
-}
-void updateWeather(string& name, float& mult) {
-    // โค้ดสุ่มอากาศ...
-}
-
-// --- [คน 4] เติมที่นี่ ---
-int sellAll(vector<Slot>& slots) {
-    // โค้ดวน Loop รวมเงินและเคลียร์ Slot...
-    return 0; // ลบออกเมื่อเขียนเสร็จ
 }
