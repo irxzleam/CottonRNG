@@ -1,0 +1,36 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <conio.h>
+using namespace std;
+
+struct Item {
+    string name;
+    int value;
+    int color;
+};
+
+int main() {
+    char input;
+    vector<Item> backpack;
+
+    if (input == 'b' || input == 'B') {
+        while (true) {
+            int totalValue = 0;
+            for (size_t i = 0; i < backpack.size(); i++) {
+                        totalValue += backpack[i].value;
+            }        
+        cout << "";
+        if (backpack.empty()) {
+            cout << "";
+        } else {
+            for (size_t i = 0; i < backpack.size(); i++) {
+                        cout << "  [" << i + 1 << "] ";
+                        cout << backpack[i].name;
+                        cout << "  =>  $" << backpack[i].value << "\n";
+            }        
+        }                
+                
+        }
+    }
+}

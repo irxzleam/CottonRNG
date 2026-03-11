@@ -53,9 +53,19 @@ int main() {
                 int idx = input - '1';
                 
                 if (!slots[idx].isPlanted) {
-                    
+
                 }
             }
-    }
+        else if (input == 's' || input == 'S') {
+            int count = 0;
+            for (int i = 0; i < 5; i++) {
+                if (slots[i].isPlanted) {
+                    string fullItemName = slots[i].buffName + " " + slots[i].sizeType;
+                    backpack.push_back({fullItemName, slots[i].value, slots[i].buffColor});
+                    slots[i].isPlanted = false;
+                    count++;
+                }
+            }
+        }
     return 0;
 }
