@@ -1,1 +1,22 @@
-
+while (true) {
+        system("cls");
+        //ชนะเงิน 10000
+        if (money >= 10000 && !hasWon) {
+            hasWon = true;
+            
+            
+            setColor(14);
+            cout << "\n===============================================================\n";
+            cout << "||                  CONGRATULATIONS!                         ||\n";
+            cout << "===============================================================\n";
+            setColor(7);
+            cout << " > You have reached $10,000 and become the Ultimate Farmer!\n";
+            cout << " > A victory image has been opened!\n";
+            setColor(14);
+            cout << "===============================================================\n\n";
+            setColor(7);
+            cout << " Press any key to continue playing... ";
+            _getch();
+            system("cls");
+        }
+        
