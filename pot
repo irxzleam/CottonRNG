@@ -1,0 +1,50 @@
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+
+struct Item {
+    string name;
+    int value;
+    int color;
+};
+
+struct Slot {
+    bool isPlanted = false;
+    string sizeType = "None";
+    string buffName = "None";
+    int buffColor = 7;
+    int value = 0;
+};
+
+int main() {
+    const int SLOT_WIDTH = 12; 
+    vector<Slot> slots(5);
+    vector<Item> backpack;
+
+    for (int row = 0; row < 5; row++) {
+            for (int i = 0; i < 5; i++) {
+                string line = "";
+                int currentColor ;
+                if (row <= 2 && slots[i].isPlanted) currentColor = slots[i].buffColor;
+                else currentColor = 15;
+                if (!slots[i].isPlanted) currentColor = 8; 
+                if (!slots[i].isPlanted) {
+                    if (row == 4) line = ""; else line = "";
+                } else {
+                    if (slots[i].sizeType == "") {
+                        if (row == 0) line = ""; else if (row == 1) line = "";
+                        else if (row == 2) line = ""; else if (row == 3) line = ""; else line = "";
+                    } else if (slots[i].sizeType == "") {
+                        if (row == 0) line = ""; else if (row == 1) line = "  ooo  ";
+                        else if (row == 2) line = ""; else if (row == 3) line = ""; else line = "";
+                    } else {
+                        if (row == 0) line = ""; else if (row == 1) line = "";
+                        else if (row == 2) line = ""; else if (row == 3) line = ""; else line = "";
+                    }
+                }
+            }
+    }
+
+    return 0;
+}
