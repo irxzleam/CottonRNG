@@ -1,3 +1,4 @@
+//ชนะ
 while (true) {
         system("cls");
         //ชนะเงิน 10000
@@ -19,4 +20,70 @@ while (true) {
             _getch();
             system("cls");
         }
-        
+        //ชนะ
+        //เงิน
+        if (money < 0) { setColor(12); cout << "-$" << abs(money) << "\n"; }
+        else { setColor(14); cout << "$" << money << "\n"; }
+        setColor(7);
+        //เงิน
+        //เงินหมด/แพ้
+        if (money <= -1) {
+                    system("cls");
+                    setColor(12);
+                    cout << "\n\n===============================================================\n";
+                    cout << "||                  [ WARNING! BANKRUPTCY ]                  ||\n";
+                    cout << "===============================================================\n";
+                    cout << " > Not enough money! (Money: $" << money << ")\n";
+                    cout << " > Selling all crops and items ...\n";
+                    
+                    int autoSellTotal = 0;
+                    
+                    // บังคับขายกระถาง
+                    for (int i = 0; i < 5; i++) {
+                        if (slots[i].isPlanted) {
+                            autoSellTotal += slots[i].value;
+                            slots[i].isPlanted = false;
+                        }
+                    }
+                    
+                    // บังคับขายกระเป๋า
+                    for (size_t i = 0; i < backpack.size(); i++) {
+                        autoSellTotal += backpack[i].value;
+                    }
+                    backpack.clear();
+                    
+                    this_thread::sleep_for(chrono::milliseconds(2000));
+                    
+                    money += autoSellTotal;
+                    
+                    cout << " > Sold everything for $" << autoSellTotal << "!\n";
+                    
+                    if (money <= -1) { 
+                        cout << " > ...But it wasn't enough. You are still in debt ($" << money << ").\n";
+                        cout << "\n [ GAME OVER ] You lost the farm! Restarting game...\n";
+                        this_thread::sleep_for(chrono::milliseconds(5000));
+                        
+                        // รีเกม
+                        money = 500;
+                        fertilizer = 0;
+                        weatherMod = 0;
+                        fertilizerActive = false;
+                        currentWeather = "Clear Sky";
+                        plantCount = 0;
+                        hasWon = false; 
+                        for (int i = 0; i < 5; i++) slots[i] = Slot();
+                        backpack.clear();
+                    } else {
+                        setColor(10);
+                        money += 100; 
+                        cout << "\n [ SYSTEM ] You barely survived! Refunded $100 planting cost.\n";
+                        cout << " > Money: $" << money << ".\n";
+                        this_thread::sleep_for(chrono::milliseconds(3000));
+                    }
+                    setColor(7);
+                    
+                    continue; 
+                }
+//แพ้
+
+
