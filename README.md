@@ -1,3 +1,3 @@
 # CottonRNG
-งานcompro
-HUH
+หมายเหตุ : lilmonxz-ship-it โดน flagged
+
