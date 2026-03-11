@@ -45,3 +45,6 @@ void rollSeedAnimation(mt19937& gen, string finalSize, string finalBuff, int fin
     
     this_thread::sleep_for(chrono::milliseconds(1500)); 
 }
+
+
+if(black){kill} 
